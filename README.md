@@ -1,4 +1,4 @@
-MPL3115A2
+MPL3115A2 Breakout
 ====
 
 ![breakout](https://dlnmh9ip6v2uc.cloudfront.net/images/products/1/1/0/8/4/11084-01_small.jpg)
