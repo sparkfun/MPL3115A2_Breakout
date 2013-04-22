@@ -6,6 +6,11 @@ MPL3115A2 Altitude/Pressure Sensor Breakout
 
 The MPL3115A2 is a MEMS pressure sensor that provides Altitude data to within 30cm (with oversampling enabled). The sensor outputs are digitized by a high resolution 24-bit ADC and transmitted over I2C, meaning it's easy to interface with most controllers.
 
+Repository Contents
+-------------------
+* **/Firmware** - Example Arduino sketch to use with the sensor.  
+* **/Hardware** - All Eagle design files (.brd, .sch)
+
 License Information
 -------------------
 
