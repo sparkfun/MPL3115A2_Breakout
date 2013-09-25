@@ -1,129 +1,56 @@
 /*
- MPL3115A2 Altitude Sensor Example
- By: A.Weiss, 7/17/2012, changes Nathan Seidle Sept 23rd, 2013
+ MPL3115A2 Barometric Pressure Sensor Library
+ By: Nathan Seidle
+ SparkFun Electronics
+ Date: September 22nd, 2013
  License: This code is public domain but you buy me a beer if you use this and we meet someday (Beerware license).
+
+ This library allows an Arduino to read from the MPL3115A2 low-cost high-precision pressure sensor.
  
- Hardware Connections (Breakoutboard to Arduino):
- -VCC = 3.3V
- -SDA = A4
- -SCL = A5
- -INT pins can be left unconnected for this demo
+ If you have feature suggestions or need support please use the github support page: https://github.com/sparkfun/MPL3115A2_Breakout
+
+ Hardware Setup: The MPL3115A2 lives on the I2C bus. Attach the SDA pin to A4, SCL to A5. Use inline 10k resistors
+ if you have a 5V board. If you are using the SparkFun breakout board you *do not* need 4.7k pull-up resistors 
+ on the bus (they are built-in).
  
- Usage:
- -Serial terminal at 9600bps
- -Prints altitude in meters, temperature in degrees C, with 1/16 resolution.
- -software enabled interrupt on new data, ~1Hz with full resolution
+ Link to the breakout board product:
  
- During testing, GPS with 9 sattelites reported 5393ft, sensor reported 5360ft (delta of 33ft). Very close!
+ Software:
+ .begin() Gets sensor on the I2C bus.
+ .readAltitude() Returns float with meters above sealevel. Ex: 1638.94
+ .readAltitudeFt() Returns float with feet above sealevel. Ex: 5376.68
+ .readPressure() Returns float with barometric pressure in Pa. Ex: 83351.25
+ .readTemp() Returns float with current temperature in Celsius. Ex: 23.37
+ .readTempF() Returns float with current temperature in Fahrenheit. Ex: 73.96
+ .setModeBarometer() Puts the sensor into Pascal measurement mode.
+ .setModeAltimeter() Puts the sensor into altimetery mode.
+ .setModeStandy() Puts the sensor into Standby mode. Required when changing CTRL1 register.
+ .setModeActive() Start taking measurements!
+ .setOversampleRate(byte) Sets the # of samples from 1 to 128. See datasheet.
+ .enableEventFlags() Sets the fundamental event flags. Required during setup.
  
  */
 
-#include <Wire.h> // for IIC communication
+#include <Wire.h>
 
-#define STATUS     0x00
-#define OUT_P_MSB  0x01
-#define OUT_P_CSB  0x02
-#define OUT_P_LSB  0x03
-#define OUT_T_MSB  0x04
-#define OUT_T_LSB  0x05
-#define DR_STATUS  0x06
-#define OUT_P_DELTA_MSB  0x07
-#define OUT_P_DELTA_CSB  0x08
-#define OUT_P_DELTA_LSB  0x09
-#define OUT_T_DELTA_MSB  0x0A
-#define OUT_T_DELTA_LSB  0x0B
-#define WHO_AM_I   0x0C
-#define F_STATUS   0x0D
-#define F_DATA     0x0E
-#define F_SETUP    0x0F
-#define TIME_DLY   0x10
-#define SYSMOD     0x11
-#define INT_SOURCE 0x12
-#define PT_DATA_CFG 0x13
-#define BAR_IN_MSB 0x14
-#define BAR_IN_LSB 0x15
-#define P_TGT_MSB  0x16
-#define P_TGT_LSB  0x17
-#define T_TGT      0x18
-#define P_WND_MSB  0x19
-#define P_WND_LSB  0x1A
-#define T_WND      0x1B
-#define P_MIN_MSB  0x1C
-#define P_MIN_CSB  0x1D
-#define P_MIN_LSB  0x1E
-#define T_MIN_MSB  0x1F
-#define T_MIN_LSB  0x20
-#define P_MAX_MSB  0x21
-#define P_MAX_CSB  0x22
-#define P_MAX_LSB  0x23
-#define T_MAX_MSB  0x24
-#define T_MAX_LSB  0x25
-#define CTRL_REG1  0x26
-#define CTRL_REG2  0x27
-#define CTRL_REG3  0x28
-#define CTRL_REG4  0x29
-#define CTRL_REG5  0x2A
-#define OFF_P      0x2B
-#define OFF_T      0x2C
-#define OFF_H      0x2D
+#include "MPL3115A2.h"
 
-#define MPL3115A2_ADDRESS 0x60 // 7-bit I2C address
-
-void setup()
+MPL3115A2::MPL3115A2()
 {
-  Wire.begin();        // join i2c bus
-  Serial.begin(9600);  // start serial for output
-
-  MPL_begin(); // Get sensor online
-
-  // Configure the sensor
-  setModeAltimeter(); // Measure altitude above sea level in meters
-  //setModeBarometer(); // Measure pressure in Pascals from 20 to 110 kPa
-  
-  setOversampleRate(128); // Set Oversample to the recommended 128
-  enableEventFlags(); // Enable all three pressure and temp event flags 
-  setModeActive(); // Go to active mode and start measuring!
+  //Set initial values for private vars
 }
 
-void loop()
+//Begin
+/*******************************************************************************************/
+//Start I2C communication
+bool MPL3115A2::begin(void)
 {
-  float altitude = readAltitude();
-  Serial.print("Altitude(m):");
-  Serial.print(altitude, 2);
-
-  altitude = readAltitudeFt();
-  Serial.print(" Altitude(ft):");
-  Serial.print(altitude, 2);
-
-  //float pressure = readPressure();
-  //Serial.print(" Pressure(Pa):");
-  //Serial.println(pressure, 2);
-
-  float temperature = readTemp();
-  Serial.print(" Temp(c):");
-  Serial.print(temperature, 2);
-
-  temperature = readTempF();
-  Serial.print(" Temp(f):");
-  Serial.print(temperature, 2);
-
-  Serial.println();
-
-  delay(100);
+  Wire.begin();
 }
 
-// This is a basic II2 communication check. If the sensor doesn't
-// return decicmal number 196 (see 0x0C register in datasheet), 
-// false is returned
-boolean MPL_begin()
-{
-  if(IIC_Read(WHO_AM_I) == 196) return(true); 
-  
-  return(false); //Serial.println("I2C Error - Double check connections");
-}
 
 //Returns the number of meters above sea level
-float readAltitude()
+float MPL3115A2::readAltitude()
 {
   // New data = wait for PDR (bit 2) to be set
   while( (IIC_Read(STATUS) & (1<<2)) == 0) break; // If PDR bit is set then we have new pressure data
@@ -159,14 +86,14 @@ float readAltitude()
 }
 
 //Returns the number of feet above sea level
-float readAltitudeFt()
+float MPL3115A2::readAltitudeFt()
 {
   return(readAltitude() * 3.28084);
 }
 
 //Reads the current pressure in Pa
 //Unit must be set in barometric pressure mode
-float readPressure()
+float MPL3115A2::readPressure()
 {
   // New data = wait for PDR (bit 2) to be set
   while( (IIC_Read(STATUS) & (1<<2)) == 0) break; // If PDR bit is set then we have new pressure data
@@ -203,7 +130,7 @@ float readPressure()
   return(pressure);
 }
 
-float readTemp()
+float MPL3115A2::readTemp()
 {
   // New data = wait for TDR (bit 1) to be set
   while( (IIC_Read(STATUS) & (1<<1)) == 0) break; // If TDR bit is set then we have new pressure data
@@ -238,14 +165,14 @@ float readTemp()
 }
 
 //Give me temperature in fahrenheit!
-float readTempF()
+float MPL3115A2::readTempF()
 {
   return((readTemp() * 9.0)/ 5.0 + 32.0); // Convert celsius to fahrenheit
 }
 
 //Sets the mode to Barometer
 //CTRL_REG1, ALT bit
-void setModeBarometer()
+void MPL3115A2::setModeBarometer()
 {
   byte tempSetting = IIC_Read(CTRL_REG1); //Read current settings
   tempSetting &= ~(1<<7); //Clear ALT bit
@@ -254,7 +181,7 @@ void setModeBarometer()
 
 //Sets the mode to Altimeter
 //CTRL_REG1, ALT bit
-void setModeAltimeter()
+void MPL3115A2::setModeAltimeter()
 {
   byte tempSetting = IIC_Read(CTRL_REG1); //Read current settings
   tempSetting |= (1<<7); //Set ALT bit
@@ -263,7 +190,7 @@ void setModeAltimeter()
 
 //Puts the sensor in standby mode
 //This is needed so that we can modify the major control registers
-void setModeStandby()
+void MPL3115A2::setModeStandby()
 {
   byte tempSetting = IIC_Read(CTRL_REG1); //Read current settings
   tempSetting &= ~(1<<0); //Clear SBYB bit for Standby mode
@@ -272,7 +199,7 @@ void setModeStandby()
 
 //Puts the sensor in active mode
 //This is needed so that we can modify the major control registers
-void setModeActive()
+void MPL3115A2::setModeActive()
 {
   byte tempSetting = IIC_Read(CTRL_REG1); //Read current settings
   tempSetting |= (1<<0); //Set SBYB bit for Active mode
@@ -283,7 +210,7 @@ void setModeActive()
 //Sets the over sample rate. Datasheet calls for 128 but you can set it 
 //from 1 to 128 samples. The higher the oversample rate the greater
 //the time between data samples.
-void setOversampleRate(byte sampleRate)
+void MPL3115A2::setOversampleRate(byte sampleRate)
 {
   if(sampleRate > 7) sampleRate = 7; //OS cannot be larger than 0b.0111
   sampleRate <<= 3; //Align it for the CTRL_REG1 register
@@ -296,13 +223,13 @@ void setOversampleRate(byte sampleRate)
 
 //Enables the pressure and temp measurement event flags so that we can
 //test against them. This is recommended in datasheet during setup.
-void enableEventFlags()
+void MPL3115A2::enableEventFlags()
 {
   IIC_Write(PT_DATA_CFG, 0x07); // Enable all three pressure and temp event flags 
 }
 
 // These are the two I2C functions in this sketch.
-byte IIC_Read(byte regAddr)
+byte MPL3115A2::IIC_Read(byte regAddr)
 {
   // This function reads one byte over IIC
   Wire.beginTransmission(MPL3115A2_ADDRESS);
@@ -312,7 +239,7 @@ byte IIC_Read(byte regAddr)
   return Wire.read();
 }
 
-void IIC_Write(byte regAddr, byte value)
+void MPL3115A2::IIC_Write(byte regAddr, byte value)
 {
   // This function writes one byto over IIC
   Wire.beginTransmission(MPL3115A2_ADDRESS);
