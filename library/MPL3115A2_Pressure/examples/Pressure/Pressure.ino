@@ -17,7 +17,7 @@
  
 */
 
-#include <Wire.h> // for IIC communication
+#include <Wire.h>
 #include "MPL3115A2.h"
 
 //Create an instance of the object
@@ -25,14 +25,14 @@ MPL3115A2 myPressure;
 
 void setup()
 {
-  Wire.begin();        // join i2c bus
-  Serial.begin(9600);  // start serial for output
+  Wire.begin();        // Join i2c bus
+  Serial.begin(9600);  // Start serial for output
 
   myPressure.begin(); // Get sensor online
 
   // Configure the sensor
-  myPressure.setModeAltimeter(); // Measure altitude above sea level in meters
-  //myPressure.setModeBarometer(); // Measure pressure in Pascals from 20 to 110 kPa
+  //myPressure.setModeAltimeter(); // Measure altitude above sea level in meters
+  myPressure.setModeBarometer(); // Measure pressure in Pascals from 20 to 110 kPa
   
   myPressure.setOversampleRate(128); // Set Oversample to the recommended 128
   myPressure.enableEventFlags(); // Enable all three pressure and temp event flags 
@@ -41,17 +41,17 @@ void setup()
 
 void loop()
 {
-  float altitude = myPressure.readAltitude();
+  /*float altitude = myPressure.readAltitude();
   Serial.print("Altitude(m):");
   Serial.print(altitude, 2);
 
   altitude = myPressure.readAltitudeFt();
   Serial.print(" Altitude(ft):");
-  Serial.print(altitude, 2);
+  Serial.print(altitude, 2);*/
 
-  //float pressure = myPressure.readPressure();
-  //Serial.print(" Pressure(Pa):");
-  //Serial.println(pressure, 2);
+  float pressure = myPressure.readPressure();
+  Serial.print("Pressure(Pa):");
+  Serial.print(pressure, 2);
 
   float temperature = myPressure.readTemp();
   Serial.print(" Temp(c):");
@@ -62,6 +62,4 @@ void loop()
   Serial.print(temperature, 2);
 
   Serial.println();
-
-  delay(100);
 }
