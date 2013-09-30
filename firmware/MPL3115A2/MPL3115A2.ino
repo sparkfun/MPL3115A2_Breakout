@@ -80,7 +80,7 @@ void setup()
   setModeAltimeter(); // Measure altitude above sea level in meters
   //setModeBarometer(); // Measure pressure in Pascals from 20 to 110 kPa
   
-  setOversampleRate(128); // Set Oversample to the recommended 128
+  setOversampleRate(4); // Set Oversample to the recommended 128
   enableEventFlags(); // Enable all three pressure and temp event flags 
   setModeActive(); // Go to active mode and start measuring!
 }
@@ -95,15 +95,15 @@ void loop()
   Serial.print(" Altitude(ft):");
   Serial.print(altitude, 2);
 
-  //float pressure = readPressure();
-  //Serial.print(" Pressure(Pa):");
-  //Serial.println(pressure, 2);
+  /*float pressure = readPressure();
+  Serial.print(" Pressure(Pa):");
+  Serial.println(pressure, 2);*/
 
-  float temperature = readTemp();
-  Serial.print(" Temp(c):");
-  Serial.print(temperature, 2);
+  //float temperature = readTemp();
+  //Serial.print(" Temp(c):");
+  //Serial.print(temperature, 2);
 
-  temperature = readTempF();
+  float temperature = readTempF();
   Serial.print(" Temp(f):");
   Serial.print(temperature, 2);
 
