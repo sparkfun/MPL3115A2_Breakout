@@ -45,34 +45,33 @@ void setup()
 
   myPressure.begin(); // Get sensor online
 
-  // Configure the sensor
+  //Configure the sensor
   myPressure.setModeAltimeter(); // Measure altitude above sea level in meters
   //myPressure.setModeBarometer(); // Measure pressure in Pascals from 20 to 110 kPa
 
   myPressure.setOversampleRate(7); // Set Oversample to the recommended 128
   myPressure.enableEventFlags(); // Enable all three pressure and temp event flags 
-  myPressure.setModeActive(); // Go to active mode and start measuring!
 }
 
 void loop()
 {
-  float altitude = myPressure.readAltitude();
-  Serial.print("Altitude(m):");
-  Serial.print(altitude, 2);
+  //float altitude = myPressure.readAltitude();
+  //Serial.print("Altitude(m):");
+  //Serial.print(altitude, 2);
 
-  altitude = myPressure.readAltitudeFt();
+  float altitude = myPressure.readAltitudeFt();
   Serial.print(" Altitude(ft):");
   Serial.print(altitude, 2);
 
-  /*float pressure = myPressure.readPressure();
-   Serial.print("Pressure(Pa):");
-   Serial.print(pressure, 2);*/
+  //float pressure = myPressure.readPressure();
+  //Serial.print("Pressure(Pa):");
+  //Serial.print(pressure, 2);
 
-  float temperature = myPressure.readTemp();
-  Serial.print(" Temp(c):");
-  Serial.print(temperature, 2);
+  //float temperature = myPressure.readTemp();
+  //Serial.print(" Temp(c):");
+  //Serial.print(temperature, 2);
 
-  temperature = myPressure.readTempF();
+  float temperature = myPressure.readTempF();
   Serial.print(" Temp(f):");
   Serial.print(temperature, 2);
 

@@ -91,6 +91,7 @@ public:
 private:
   //Private Functions
 
+  void toggleOneShot();
   byte IIC_Read(byte regAddr);
   void IIC_Write(byte regAddr, byte value);
 

@@ -51,7 +51,6 @@ void setup()
   
   myPressure.setOversampleRate(7); // Set Oversample to the recommended 128
   myPressure.enableEventFlags(); // Enable all three pressure and temp event flags 
-  myPressure.setModeActive(); // Go to active mode and start measuring!
 }
 
 void loop()
@@ -68,11 +67,11 @@ void loop()
   Serial.print("Pressure(Pa):");
   Serial.print(pressure, 2);
 
-  float temperature = myPressure.readTemp();
-  Serial.print(" Temp(c):");
-  Serial.print(temperature, 2);
+  //float temperature = myPressure.readTemp();
+  //Serial.print(" Temp(c):");
+  //Serial.print(temperature, 2);
 
-  temperature = myPressure.readTempF();
+  float temperature = myPressure.readTempF();
   Serial.print(" Temp(f):");
   Serial.print(temperature, 2);
 
