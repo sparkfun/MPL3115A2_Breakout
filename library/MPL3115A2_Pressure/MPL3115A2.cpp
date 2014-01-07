@@ -180,7 +180,20 @@ float MPL3115A2::readTemp()
 	lsb = Wire.read();
 
 	toggleOneShot(); //Toggle the OST bit causing the sensor to immediately take another reading
-	
+
+    //Negative temperature fix by D.D.G.
+	word foo = 0;
+    bool negSign = false;
+
+    //Check for 2s compliment
+	if(msb > 0x7F)
+	{
+        foo = ~((msb << 8) + lsb) + 1;  //2’s complement
+        msb = foo >> 8;
+        lsb = foo & 0x00F0; 
+        negSign = true;
+	}
+
 	// The least significant bytes l_altitude and l_temp are 4-bit,
 	// fractional values, so you must cast the calulation in (float),
 	// shift the value over 4 spots to the right and divide by 16 (since 
@@ -189,6 +202,8 @@ float MPL3115A2::readTemp()
 
 	float temperature = (float)(msb + templsb);
 
+	if (negSign) temperature = 0 - temperature;
+	
 	return(temperature);
 }
 
