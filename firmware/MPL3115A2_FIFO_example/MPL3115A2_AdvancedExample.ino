@@ -8,8 +8,8 @@
  Basic functions are implemented including absolute pressure (50 to 110 kPa), altimeter pressure (mmHg), 
  altitude (meters or feet), and temperature (-40 to 85 C).
  
- In addition, provision for the FIFO mode in the initialization, watermark setting, and register
- read funcitions for autonomous data logging over as many as nine hours with 32 data samples of P, T.
+ In addition, provision for the FIFO mode in the initialization, overflow setting, and register
+ read functions for autonomous data logging over as many as nine hours with 32 data samples of P, T.
  
  Hardware setup:
  MPL3115A2 Breakout ------------ Arduino Mini Pro 3.3 V
@@ -21,7 +21,7 @@
  GND ---------------------- GND
  
  SDA and SCL should have external pull-up resistors (to 3.3V) if usng a 5 V Arduino.
- 10k resistors worked for me. They should be on the MPL3115A2 SparkFun breakout board.
+ They should be on the MPL3115A2 SparkFun breakout board.
  I didn't need any for the 3.3 V Pro Mini.
  
  Jim Lindblom's Note: The MMA8452 is an I2C sensor, however this code does
@@ -37,15 +37,17 @@
  every time I hooked it up to the Arduino/Sensor or opened a serial monitor the devices were re-initialized, 
  defeating the autonomous logging function.
 
- This was remedied by placing a 10 uF capacitor between reset and ground before eiher reconnecting the sensor 
- through the FTDI board or opening a serial monitor. Either event drives the resolds the reset high preventing the device reset.
- Of course, the capacitor must be removed when uploading a new or updated sketch or an error will be generated.  
+ This was remedied by placing a 10 uF capacitor between reset and ground before either reconnecting the sensor 
+ through the FTDI board or opening a serial monitor. Either event drives the reset low, the capacitor keeps the
+ reset high long enough to avoid resetting. Of course, the capacitor must be removed when uploading a new or updated 
+ sketch or an error will be generated.  
+
  I got this idea from:
  http://electronics.stackexchange.com/questions/24743/arduino-resetting-while-reconnecting-the-serial-terminal
  where there is a little more discussion. Thanks oXAKHIL!
  
- Lastly, I put a piece of porous foam over the sensor to block ambient light since thre is some indication the pressure and
- altitude reading are light sensitive.
+ Lastly, I put a piece of porous foam over the sensor to block ambient light since thre is some indication the 
+ pressure and altitude reading are light sensitive.
  
  Note: Right now I am only getting 31 data points in the FIFO mode; not sure why yet!
  */
