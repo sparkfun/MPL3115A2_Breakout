@@ -134,9 +134,9 @@ byte mercury[8] = {
 // Integer values between 0 < n < 7 give oversample ratios 2^n and 
 // sampling intervals of 0=6 ms , 1=10, 2=18, 3=34, 4=66, 5=130, 6=258, and 7=512 
 const byte SAMPLERATE = 7;  // maximum oversample = 7
-const byte ST_VALUE = 6; //Set auto time step (2^ST_VALUE) seconds  
-int FIFOon = 1; // Choose realtime data acquisition or FIFO delayed data acquisition; default is real time 
-bool AltimeterMode = false; // use to choose between altimeter and barmeter modes for FIFO data
+const byte ST_VALUE = 0; //Set auto time step (2^ST_VALUE) seconds  
+int FIFOon = 0; // Choose realtime data acquisition or FIFO delayed data acquisition; default is real time 
+int AltimeterMode = 0; // use to choose between altimeter and barmeter modes for FIFO data
 
 // Define device outputs
 float altitude = 0.;
@@ -166,8 +166,7 @@ void setup()
   if (c == 0xC4) // WHO_AM_I should always be 0xC4
   {  
 
-    // Start off by resetting all registers to the default
-    MPL3115A2Reset();
+    MPL3115A2Reset();  // Start off by resetting all registers to the default
     
     // Set up the interrupt pins, they're set as active high, push-pull
     pinMode(int1Pin, INPUT);
@@ -177,21 +176,10 @@ void setup()
     pinMode(readoutPin, INPUT);
     digitalWrite(readoutPin, LOW);// Initialize readout pin to LOW
     
-    // Select either real time data acquisition or FIFO data acquisition with watermark interrupt
-    if(FIFOon == 0) {
-    initRealTimeMPL3115A2();  // initialize the accelerometer for realtime data acquisition if communication is OK
-    Serial.println("MPL3115A2 realtime data acquisition active...");
-    }
-    if(FIFOon == 1) {
-    initFIFOMPL3115A2();  // initialize the accelerometer for delayed (FIFO) acquisition if communication is OK
-    Serial.println("MPL3115A2 FIFO data acquisition active...");
-    if(AltimeterMode) {ActiveAltimeterMode(); Serial.println("Active Altimeter Mode");} // Choose either barometer or altimeter mode
-    else {ActiveBarometerMode(); Serial.println("Active Barometer Mode");}
-    }
     SampleRate(SAMPLERATE); // Set oversampling rate
     Serial.print("Oversampling Rate is "); Serial.println(SAMPLERATE);
     TimeStep(ST_VALUE); // Set data update interval
-    Serial.print("Data update interval is "); Serial.print(1<<ST_VALUE); Serial.println("  seconds");
+    Serial.print("Data update interval is "); Serial.print(1<<ST_VALUE); Serial.println(" seconds");
     MPL3115A2enableEventflags();
     Serial.println("MPL3115A2 event flags enabled...");
 
@@ -209,45 +197,45 @@ void loop()
   
    if(FIFOon == 1) {
 
+   initFIFOMPL3115A2();  // initialize the accelerometer for delayed (FIFO) acquisition if communication is OK
+   Serial.println("MPL3115A2 FIFO data acquisition active...");
+   if(AltimeterMode) {ActiveAltimeterMode(); Serial.println("Active Altimeter Mode");} // Choose either barometer or altimeter mode
+   else {ActiveBarometerMode(); Serial.println("Active Barometer Mode");}
+ 
    byte rawData[160];
    int i = 0;
-   
 // This is similar to the interrupt method in the active data acquisition routine
 // Overflow mode should write out the data just once, when the 32 samples have been acquired
-   for (i = 0; i < 32*(1<<ST_VALUE); i++) { // Countdown the seconds on the LCD
-   lcd.setCursor(0,0); lcd.print("Must wait ");
-   lcd.setCursor(10,0); lcd.print((int)(32*(1<<ST_VALUE) - i)); lcd.print("s    "); 
-   delay(1000);
-   lcd.setCursor(0,1);
-   lcd.print("in FIFO mode    "); 
-   } 
-   while (digitalRead(int2Pin) == LOW); 
-   digitalWrite(int2Pin, LOW); // Wait for interrupt on intPin2 then reset LOW
+   for (i; i < 32*(1<<ST_VALUE); i++) {
+     lcd.setCursor(0,0); lcd.print("Must wait ");
+     lcd.setCursor(10,0); lcd.print((int)(32*(1<<ST_VALUE) - i)); lcd.print("s    "); 
+     delay(1000);
+     lcd.setCursor(0,1); lcd.print("in FIFO mode    "); 
+   }
+   while(digitalRead(int2Pin) == LOW);
    while ((readRegister(INT_SOURCE) & 0x40) == 0); Serial.println("Interrupt on FIFO source"); // Wait for interrupt source = FIFO on bit 6
-   while (readRegister(F_STATUS) & 0x80 == 0);  Serial.println("Overflow reached"); // Check F_STATUS bit 6 to detect overflow interrupt  
+   while (readRegister(F_STATUS) & 0x80 == 0);  // Should clear the INT_SOURCE bit
    Clock(); // capture time overflow condition reached
-   lcd.setCursor(0,1);
-   lcd.print("OVR reached @ "); lcd.print((int) (readRegister(F_STATUS)<<2)/4.); // Print number of data points successfully acquired
+   lcd.setCursor(0,1); lcd.print("OVR reached @ "); lcd.print((int) (readRegister(F_STATUS)<<2)/4); // Print number of data points successfully acquired
    
 // We will allow delayed read of FIFO registers by requiring digital pin to go HIGH before read;
 // This is useful for autonomous data acquisition applications where the data is collected at one time
 // and downloaded to the seial monitor or other output device at another time. This is a poor man's data logger!
    while(digitalRead(readoutPin) == LOW); // Wait for the readout pin to go momentarily HIGH before data read
  
- // Check how much time has elapsed since last write
-  byte c = readRegister(SYSMOD); 
-  Serial.print("Time since last write = "); Serial.print((int) c*(1<<ST_VALUE)); Serial.println(" seconds"); 
+   byte c = readRegister(TIME_DLY); // Check how much time has elapsed since last write
+   Serial.print("Time since last write = "); Serial.print((int) (c*(1<<ST_VALUE))); Serial.println(" seconds"); 
  
-  readRegisters(OUT_P_MSB, 160, &rawData[0]); // If overflow reached, dump the FIFO data registers
+   readRegisters(F_DATA, 160, &rawData[0]); // If overflow reached, dump the FIFO data registers
         
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Process the FIFO data buffer contents and print to serial monitor
 // Convert all the raw FIFO data to pressure/altitude and temperature       
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 int j;
-  for(j = 0; j <= 155; j+=5) {
+  for(j = 0; j < 160; j+=5) {
 
-// Pressure bytes
+// Pressure/Altitude bytes
   byte msb = rawData[j];
   byte csb = rawData[j+1];
   byte lsb = rawData[j+2];
@@ -259,16 +247,17 @@ int j;
  // Calculate altitude, check for negative sign in altimeter data
  long foo = 0;
  if(msb > 0x7F) {
-   foo = ~(msb << 16 | csb << 8 | lsb) + 1; // 2's complement the data
+   foo = ~((long)msb << 16 | (long)csb << 8 | (long)lsb) + 1; // 2's complement the data
    altitude = (float) (foo >> 8) + (float) ((lsb >> 4)/16.0); // Whole number plus fraction altitude in meters for negative altitude
    altitude *= -1.;
  }
  else {
-   altitude = (float) ( (msb << 8) | csb) + (float) ((lsb >> 4)/16.0);  // Whole number plus fraction altitude in meters
+   foo = ((msb << 8) | csb);
+   altitude = (float) (foo) + (float) ((lsb >> 4)/16.0);  // Whole number plus fraction altitude in meters
  }
  }
   else {
-  long pressure_whole =  (msb << 16 | csb << 8 | lsb) ; // Construct whole number pressure
+  long pressure_whole =  ((long)msb << 16 | (long)csb << 8 | (long)lsb) ; // Construct whole number pressure
   pressure_whole >>= 6;
  
   lsb &= 0x30; 
@@ -292,13 +281,20 @@ if(msbT > 0x7F) {
 // Output data array to serial printer; comma delimits useful for importing into excel spreadsheet
  Serial.print("Time ,"); Serial.print((j/5)*(1<<ST_VALUE)); Serial.print(", seconds");
  Serial.print(", Temperature = ,"); Serial.print(temperature, 1); Serial.print(", C,");
- Serial.print(" Pressure = ,"); Serial.print(pressure/1000., 2); Serial.println(", kPa");
+ if(AltimeterMode) {Serial.print(" Altitude = ,"); Serial.print(altitude, 1); Serial.println(", m");}
+ else {Serial.print(" Pressure = ,"); Serial.print(pressure/1000., 2); Serial.println(", kPa");}
 
- while(digitalRead(readoutPin) == HIGH); // Wait for the readout pin to go LOW before resuming data collection
  }
- }
+lcd.setCursor(0,0); lcd.print((int) (readRegister(F_STATUS)<<2)/4); lcd.print(" data pts left");
+lcd.setCursor(0,1); lcd.print("reset to repeat ");
+
+while(1) ;
+}
  
 else {
+  
+    initRealTimeMPL3115A2();  // initialize the accelerometer for realtime data acquisition if communication is OK
+    Serial.println("MPL3115A2 realtime data acquisition active...");
   
   // Toggle beteen Active Altimeter Mode and Active Barometer Mode
    
@@ -413,7 +409,7 @@ void readAltitude() // Get altitude in meters and temperature in centigrade
  // Calculate altitude, check for negative sign in altimeter data
  long foo = 0;
  if(msbA > 0x7F) {
-   foo = ~(msbA << 16 | csbA << 8 | lsbA) + 1; // 2's complement the data
+   foo = ~((long)msbA << 16 | (long)csbA << 8 | (long)lsbA) + 1; // 2's complement the data
    altitude = (float) (foo >> 8) + (float) ((lsbA >> 4)/16.0); // Whole number plus fraction altitude in meters for negative altitude
    altitude *= -1.;
  }
@@ -458,7 +454,7 @@ void readPressure()
   byte msbT = rawData[3];
   byte lsbT = rawData[4]; 
  
-  long pressure_whole =   (msbP << 16 |  csbP << 8 |  lsbP) ; // Construct whole number pressure
+  long pressure_whole =   ((long)msbP << 16 |  (long)csbP << 8 |  (long)lsbP) ; // Construct whole number pressure
   pressure_whole >>= 6;
  
   lsbP &= 0x30; 
@@ -542,7 +538,7 @@ void initFIFOMPL3115A2()
   
   // Set FIFO mode
   writeRegister(F_SETUP, 0x00); // Clear FIFO mode
-  writeRegister(F_SETUP, 0xA1); // Set F_MODE to accept 32 data samples and interrupt when overflow = 33 reached
+  writeRegister(F_SETUP, 0x80); // Set F_MODE to accept 32 data samples and interrupt when overflow = 32 reached
   
   MPL3115A2Active();  // Set to active to start reading
 }
@@ -749,8 +745,8 @@ void Clock()
   unsigned long hours   = 0;
   // Define variables to set initial values for seconds, minutes, and hours 
   unsigned long setseconds = 30; // set clock seconds 
-  unsigned long setminutes = 39; // set clock minutes
-  unsigned long sethours = 12; // set clock hours
+  unsigned long setminutes = 9; // set clock minutes
+  unsigned long sethours = 11; // set clock hours
   // Define variables to set alarm values for seconds, minutes, and hours 
   unsigned long tseconds = 0; // set clock seconds 
   unsigned long tminutes = 0; // set clock minutes
