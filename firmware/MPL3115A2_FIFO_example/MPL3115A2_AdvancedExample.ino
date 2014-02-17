@@ -8,7 +8,7 @@
  Basic functions are implemented including absolute pressure (50 to 110 kPa), altimeter pressure (mmHg), 
  altitude (meters or feet), and temperature (-40 to 85 C).
  
- In addition, provision for the FIFO mode in the initialization, overflow setting, and register
+ In addition, provision for the FIFO mode in the initialization, watermark/overflow setting, and register
  read functions for autonomous data logging over as many as nine hours with 32 data samples of P, T.
  
  Hardware setup:
@@ -49,7 +49,6 @@
  Lastly, I put a piece of porous foam over the sensor to block ambient light since thre is some indication the 
  pressure and altitude reading are light sensitive.
  
- Note: Right now I am only getting 31 data points in the FIFO mode; not sure why yet!
  */
 
 #include "i2c.h"  // not the wire library, can't use pull-ups
@@ -136,8 +135,8 @@ byte mercury[8] = {
 // Integer values between 0 < n < 7 give oversample ratios 2^n and 
 // sampling intervals of 0=6 ms , 1=10, 2=18, 3=34, 4=66, 5=130, 6=258, and 7=512 
 const byte SAMPLERATE = 7;  // maximum oversample = 7
-const byte ST_VALUE = 0; //Set auto time step (2^ST_VALUE) seconds  
-int FIFOon = 0; // Choose realtime data acquisition or FIFO delayed data acquisition; default is real time 
+const byte ST_VALUE = 5; //Set auto time step (2^ST_VALUE) seconds  
+int FIFOon = 1; // Choose realtime data acquisition or FIFO delayed data acquisition; default is real time 
 int AltimeterMode = 0; // use to choose between altimeter and barmeter modes for FIFO data
 
 // Define device outputs
@@ -197,7 +196,13 @@ void setup()
 void loop()
 {  
   
-   if(FIFOon == 1) {
+// Currently configured to continuously log data if FIFOon = 1; the FIFO buffer is read and output to a serial monitor
+// when digital pin 2 is momentarily set HIGH. The data begins accumulating again after the data read. In the
+// initFIFOMPL3115A2() function, the overflow interrupt can be set instead of watermark, then the data log only
+// occurs once until the overflow interrupt is triggered on FIFO data register full condition; for some reason, this happens
+// after reading 31 not 32 data points.
+
+if(FIFOon == 1) {
 
    initFIFOMPL3115A2();  // initialize the accelerometer for delayed (FIFO) acquisition if communication is OK
    Serial.println("MPL3115A2 FIFO data acquisition active...");
@@ -205,27 +210,29 @@ void loop()
    else {ActiveBarometerMode(); Serial.println("Active Barometer Mode");}
  
    byte rawData[160];
-   int i = 0;
+
 // This is similar to the interrupt method in the active data acquisition routine
+// Watermark mode should continuously log data and download to serial monitor after readoutPin set HIGH
 // Overflow mode should write out the data just once, when the 32 samples have been acquired
-   for (i; i < 32*(1<<ST_VALUE); i++) {
+   int i;
+   for (i=0; i < 31*(1<<ST_VALUE); i++) {
      lcd.setCursor(0,0); lcd.print("Must wait ");
      lcd.setCursor(10,0); lcd.print((int)(32*(1<<ST_VALUE) - i)); lcd.print("s    "); 
-     delay(1000);
      lcd.setCursor(0,1); lcd.print("in FIFO mode    "); 
+     delay(1000);
    }
-   while(digitalRead(int2Pin) == LOW);
+   while(digitalRead(int2Pin) == LOW); // Wait for interrupt event on intPin2
    while ((readRegister(INT_SOURCE) & 0x40) == 0); Serial.println("Interrupt on FIFO source"); // Wait for interrupt source = FIFO on bit 6
-   while (readRegister(F_STATUS) & 0x80 == 0);  // Should clear the INT_SOURCE bit
+   while (readRegister(F_STATUS) & 0x80 | 0x40 == 0);  // Should clear the INT_SOURCE bit
    Clock(); // capture time overflow condition reached
-   lcd.setCursor(0,1); lcd.print("OVR reached @ "); lcd.print((int) (readRegister(F_STATUS)<<2)/4); // Print number of data points successfully acquired
+   lcd.setCursor(0,1); lcd.print("Data pts = "); lcd.print((int) (readRegister(F_STATUS)<<2)/4); // Print number of data points successfully acquired
    
 // We will allow delayed read of FIFO registers by requiring digital pin to go HIGH before read;
 // This is useful for autonomous data acquisition applications where the data is collected at one time
 // and downloaded to the seial monitor or other output device at another time. This is a poor man's data logger!
    while(digitalRead(readoutPin) == LOW); // Wait for the readout pin to go momentarily HIGH before data read
  
-   byte c = readRegister(TIME_DLY); // Check how much time has elapsed since last write
+   byte c = readRegister(TIME_DLY); // Check how much time has elapsed since last write; useful for overflow (read once) mode
    Serial.print("Time since last write = "); Serial.print((int) (c*(1<<ST_VALUE))); Serial.println(" seconds"); 
  
    readRegisters(F_DATA, 160, &rawData[0]); // If overflow reached, dump the FIFO data registers
@@ -287,10 +294,6 @@ if(msbT > 0x7F) {
  else {Serial.print(" Pressure = ,"); Serial.print(pressure/1000., 2); Serial.println(", kPa");}
 
  }
-lcd.setCursor(0,0); lcd.print((int) (readRegister(F_STATUS)<<2)/4); lcd.print(" data pts left");
-lcd.setCursor(0,1); lcd.print("reset to repeat ");
-
-while(1) ;
 }
  
 else {
@@ -540,8 +543,9 @@ void initFIFOMPL3115A2()
   
   // Set FIFO mode
   writeRegister(F_SETUP, 0x00); // Clear FIFO mode
-  writeRegister(F_SETUP, 0x80); // Set F_MODE to accept 32 data samples and interrupt when overflow = 32 reached
-  
+//  writeRegister(F_SETUP, 0x80); // Set F_MODE to interrupt when overflow = 32 reached
+  writeRegister(F_SETUP, 0x60); // Set F_MODE to accept 32 data samples and interrupt when watermark = 32 reached
+
   MPL3115A2Active();  // Set to active to start reading
 }
 
