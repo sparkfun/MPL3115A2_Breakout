@@ -1,5 +1,5 @@
 /* MPL3115A2 Example Code
- by: Kris Winer adapted from skeleton codes by Jim Lindblom and Nathan Seidle (Thanks guys!)
+ by: Kris Winer adapted from skeleton codes by Jim Lindblom, A. Weiss, and Nathan Seidle (Thanks guys!)
  Modified: February 12, 2014 by Kris Winer
  Original date: November 17, 2011, Jim Lindblom, SparkFun Electronics
  
