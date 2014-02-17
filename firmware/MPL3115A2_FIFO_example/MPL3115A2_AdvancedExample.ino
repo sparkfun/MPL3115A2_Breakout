@@ -84,7 +84,7 @@ byte mercury[8] = {
 // Standard 7-bit I2C slave address is 1100000 = 0x60, 8-bit read address is 0xC1, 8-bit write is 0xC0
 #define MPL3115A2_ADDRESS 0x60  // SA0 is high, 0x1C if low
 
-// Register defines courtesy Nathan Seidle, SparkFun Electronics
+// Register defines courtesy A. Weiss and Nathan Seidle, SparkFun Electronics
 #define STATUS     0x00
 #define OUT_P_MSB  0x01
 #define OUT_P_CSB  0x02
