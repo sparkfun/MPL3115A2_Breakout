@@ -507,7 +507,7 @@ void SampleRate(byte samplerate)
 
   byte c = readRegister(CTRL_REG1);
   writeRegister(CTRL_REG1, c & ~(0x38)); // Clear OSR bits 3,4,5
-  if(samplerate < 8) { // OSR between  and 7
+  if(samplerate < 8) { // OSR between 0 and 7
   writeRegister(CTRL_REG1, c | (samplerate << 3));  // Write OSR to bits 3,4,5
   }
   
