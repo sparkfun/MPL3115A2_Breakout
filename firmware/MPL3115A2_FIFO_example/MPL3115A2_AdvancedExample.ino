@@ -530,16 +530,16 @@ void initFIFOMPL3115A2()
    MPL3115A2Standby();  // Must be in standby to change registers
   
   // Set CTRL_REG4 register to configure interupt enable
-  // Enable data ready interrupt (bit 7), enable FIFO (bit 6), eneble pressure window (bit 5), temperature window (bit 4),
+  // Enable data ready interrupt (bit 7), enable FIFO (bit 6), enable pressure window (bit 5), temperature window (bit 4),
   // pressure threshold (bit 3), temperature threshold (bit 2), pressure change (bit 1) and temperature change (bit 0)
-  writeRegister(CTRL_REG4, 0x40 );  // enable FIFO
+  writeRegister(CTRL_REG4, 0x40);  // enable FIFO
   
   //  Configure INT 1 for data ready, all other (inc. FIFO) interrupts to INT2
-  writeRegister(CTRL_REG5, 0x80 ); 
+  writeRegister(CTRL_REG5, 0x80); 
   
   // Set CTRL_REG3 register to configure interupt signal type
   // Active HIGH, push-pull interupts INT1 and INT 2
-  writeRegister(CTRL_REG3, 0x22 ); 
+  writeRegister(CTRL_REG3, 0x22); 
   
   // Set FIFO mode
   writeRegister(F_SETUP, 0x00); // Clear FIFO mode
@@ -565,16 +565,16 @@ void initRealTimeMPL3115A2()
    MPL3115A2Standby();  // Must be in standby to change registers
   
   // Set CTRL_REG4 register to configure interupt enable
-  // Enable data ready interrupt (bit 7), enable FIFO (bit 6), eneble pressure window (bit 5), temperature window (bit 4),
+  // Enable data ready interrupt (bit 7), enable FIFO (bit 6), enable pressure window (bit 5), temperature window (bit 4),
   // pressure threshold (bit 3), temperature threshold (bit 2), pressure change (bit 1) and temperature change (bit 0)
-  writeRegister(CTRL_REG4, 0x80 );  
+  writeRegister(CTRL_REG4, 0x80);  
   
   //  Configure INT 1 for data ready, all other interrupts to INT2
-  writeRegister(CTRL_REG5, 0x80 ); 
+  writeRegister(CTRL_REG5, 0x80); 
   
   // Set CTRL_REG3 register to configure interupt signal type
   // Active HIGH, push-pull interupts INT1 and INT 2
-  writeRegister(CTRL_REG3, 0x22 ); 
+  writeRegister(CTRL_REG3, 0x22); 
   
   // Set FIFO mode
   writeRegister(F_SETUP, 0x00); // disable FIFO mode
@@ -590,7 +590,7 @@ void TimeStep(byte ST_Value)
  
  byte c = readRegister(CTRL_REG2); // Read contents of register CTRL_REG2
  if (ST_Value <= 0xF) {
- writeRegister(CTRL_REG2, (c | ST_Value)); // Set time step n from 0x1 to 0xF (bits 0 - 3) for time intervals from 1 to 32768 (2^n) seconds
+ writeRegister(CTRL_REG2, (c | ST_Value)); // Set time step n from 0x0 to 0xF (bits 0 - 3) for time intervals from 1 to 32768 (2^n) seconds
  }
  
  MPL3115A2Active(); // Set to active to start reading
