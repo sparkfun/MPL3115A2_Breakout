@@ -138,7 +138,7 @@ const byte SAMPLERATE = 7;  // maximum oversample = 7
 // Set time between FIFO data points from 1 to 16328 s (For some reason I get a spurious result for ST_Value = 15) 
 const byte ST_VALUE = 1; // Set auto time step (2^ST_VALUE) seconds
 int FIFOon = 1; // Choose realtime data acquisition or FIFO delayed data acquisition; default is real time 
-int AltimeterMode = 0; // use to choose between altimeter and barmeter modes for FIFO data
+int AltimeterMode = 0; // use to choose between altimeter and barometer modes for FIFO data
 
 // Define device outputs
 float altitude = 0.;
@@ -233,7 +233,7 @@ if(FIFOon == 1) {
    
 // We will allow delayed read of FIFO registers by requiring digital pin to go HIGH before read;
 // This is useful for autonomous data acquisition applications where the data is collected at one time
-// and downloaded to the seial monitor or other output device at another time. This is a poor man's data logger!
+// and downloaded to the serial monitor or other output device at another time. This is a poor man's data logger!
    while(digitalRead(readoutPin) == LOW); // Wait for the readout pin to go momentarily HIGH before data read
  
    unsigned long c = readRegister(TIME_DLY); // Check how much time has elapsed since last write; useful for overflow (read once) mode
