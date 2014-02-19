@@ -38,7 +38,7 @@
  defeating the autonomous logging function.
 
  This was remedied by placing a 10 uF capacitor between reset and ground before either reconnecting the sensor 
- through the FTDI board or opening a serial monitor. Either event drives the reset low; the capacitor keeps the
+ through the FTDI board or opening a serial monitor. Either event drives the reset low, the capacitor keeps the
  reset high long enough to avoid resetting. Of course, the capacitor must be removed when uploading a new or updated 
  sketch or an error will be generated.  
 
@@ -135,7 +135,8 @@ byte mercury[8] = {
 // Integer values between 0 < n < 7 give oversample ratios 2^n and 
 // sampling intervals of 0=6 ms , 1=10, 2=18, 3=34, 4=66, 5=130, 6=258, and 7=512 
 const byte SAMPLERATE = 7;  // maximum oversample = 7
-const byte ST_VALUE = 5; //Set auto time step (2^ST_VALUE) seconds  
+// Set time between FIFO data points from 1 to 16328 s (For some reason I get a spurious result for ST_Value = 15) 
+const byte ST_VALUE = 1; // Set auto time step (2^ST_VALUE) seconds
 int FIFOon = 1; // Choose realtime data acquisition or FIFO delayed data acquisition; default is real time 
 int AltimeterMode = 0; // use to choose between altimeter and barmeter modes for FIFO data
 
@@ -180,7 +181,7 @@ void setup()
     SampleRate(SAMPLERATE); // Set oversampling rate
     Serial.print("Oversampling Rate is "); Serial.println(SAMPLERATE);
     TimeStep(ST_VALUE); // Set data update interval
-    Serial.print("Data update interval is "); Serial.print(1<<ST_VALUE); Serial.println(" seconds");
+    Serial.print("Data update interval is "); Serial.print((unsigned long) (1 << ST_VALUE)); Serial.println(" seconds");
     MPL3115A2enableEventflags();
     Serial.println("MPL3115A2 event flags enabled...");
 
@@ -214,10 +215,13 @@ if(FIFOon == 1) {
 // This is similar to the interrupt method in the active data acquisition routine
 // Watermark mode should continuously log data and download to serial monitor after readoutPin set HIGH
 // Overflow mode should write out the data just once, when the 32 samples have been acquired
-   int i;
-   for (i=0; i < 31*(1<<ST_VALUE); i++) {
-     lcd.setCursor(0,0); lcd.print("Must wait ");
-     lcd.setCursor(10,0); lcd.print((int)(32*(1<<ST_VALUE) - i)); lcd.print("s    "); 
+// Sensor presumably takes one data read at start; can wait for other 31 data reads before checking interrupts
+//
+      unsigned long count = 1 << ST_VALUE; // Use unsigned long because this number can get quite large!
+      unsigned long i = 0;
+   for (i=0; i < 31*count; i++) {
+     lcd.setCursor(0,0); lcd.print("Wait ");
+     lcd.setCursor(6,0); lcd.print((31*count - i)); lcd.print("s    "); 
      lcd.setCursor(0,1); lcd.print("in FIFO mode    "); 
      delay(1000);
    }
@@ -232,8 +236,8 @@ if(FIFOon == 1) {
 // and downloaded to the seial monitor or other output device at another time. This is a poor man's data logger!
    while(digitalRead(readoutPin) == LOW); // Wait for the readout pin to go momentarily HIGH before data read
  
-   byte c = readRegister(TIME_DLY); // Check how much time has elapsed since last write; useful for overflow (read once) mode
-   Serial.print("Time since last write = "); Serial.print((int) (c*(1<<ST_VALUE))); Serial.println(" seconds"); 
+   unsigned long c = readRegister(TIME_DLY); // Check how much time has elapsed since last write; useful for overflow (read once) mode
+   Serial.print("Time since last write = "); Serial.print(c*count); Serial.println(" seconds"); 
  
    readRegisters(F_DATA, 160, &rawData[0]); // If overflow reached, dump the FIFO data registers
         
@@ -507,7 +511,7 @@ void SampleRate(byte samplerate)
 
   byte c = readRegister(CTRL_REG1);
   writeRegister(CTRL_REG1, c & ~(0x38)); // Clear OSR bits 3,4,5
-  if(samplerate < 8) { // OSR between 0 and 7
+  if(samplerate < 8) { // OSR between  and 7
   writeRegister(CTRL_REG1, c | (samplerate << 3));  // Write OSR to bits 3,4,5
   }
   
@@ -751,8 +755,8 @@ void Clock()
   unsigned long hours   = 0;
   // Define variables to set initial values for seconds, minutes, and hours 
   unsigned long setseconds = 30; // set clock seconds 
-  unsigned long setminutes = 9; // set clock minutes
-  unsigned long sethours = 11; // set clock hours
+  unsigned long setminutes = 52; // set clock minutes
+  unsigned long sethours = 10; // set clock hours
   // Define variables to set alarm values for seconds, minutes, and hours 
   unsigned long tseconds = 0; // set clock seconds 
   unsigned long tminutes = 0; // set clock minutes
