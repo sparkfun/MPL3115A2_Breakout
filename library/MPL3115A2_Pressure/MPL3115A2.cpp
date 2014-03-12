@@ -67,14 +67,8 @@ float MPL3115A2::readAltitude()
 	Wire.beginTransmission(MPL3115A2_ADDRESS);
 	Wire.write(OUT_P_MSB);  // Address of data to get
 	Wire.endTransmission(false); // Send data to I2C dev with option for a repeated start. THIS IS NECESSARY and not supported before Arduino V1.0.1!
-	Wire.requestFrom(MPL3115A2_ADDRESS, 3); // Request three bytes
-
-	//Wait for data to become available
-	counter = 0;
-	while(Wire.available() < 3)
-	{
-		if(counter++ > 100) return(-999); //Error out
-		delay(1);
+	if (Wire.requestFrom(MPL3115A2_ADDRESS, 3) != 3) { // Request three bytes
+		return -999;
 	}
 
 	byte msb, csb, lsb;
@@ -119,14 +113,8 @@ float MPL3115A2::readPressure()
 	Wire.beginTransmission(MPL3115A2_ADDRESS);
 	Wire.write(OUT_P_MSB);  // Address of data to get
 	Wire.endTransmission(false); // Send data to I2C dev with option for a repeated start. THIS IS NECESSARY and not supported before Arduino V1.0.1!
-	Wire.requestFrom(MPL3115A2_ADDRESS, 3); // Request three bytes
-
-	//Wait for data to become available
-	counter = 0;
-	while(Wire.available() < 3)
-	{
-		if(counter++ > 100) return(-999); //Error out
-		delay(1);
+	if (Wire.requestFrom(MPL3115A2_ADDRESS, 3) != 3) { // Request three bytes
+		return -999;
 	}
 
 	byte msb, csb, lsb;
@@ -165,14 +153,8 @@ float MPL3115A2::readTemp()
 	Wire.beginTransmission(MPL3115A2_ADDRESS);
 	Wire.write(OUT_T_MSB);  // Address of data to get
 	Wire.endTransmission(false); // Send data to I2C dev with option for a repeated start. THIS IS NECESSARY and not supported before Arduino V1.0.1!
-	Wire.requestFrom(MPL3115A2_ADDRESS, 2); // Request two bytes
-
-	//Wait for data to become available
-	counter = 0;
-	while(Wire.available() < 2)
-	{
-		if(counter++ > 100) return(-999); //Error out
-		delay(1);
+	if (Wire.requestFrom(MPL3115A2_ADDRESS, 2) != 2) { // Request two bytes
+		return -999;
 	}
 
 	byte msb, lsb;
@@ -188,7 +170,7 @@ float MPL3115A2::readTemp()
     //Check for 2s compliment
 	if(msb > 0x7F)
 	{
-        foo = ~((msb << 8) + lsb) + 1;  //2’s complement
+        foo = ~((msb << 8) + lsb) + 1;  //2â€™s complement
         msb = foo >> 8;
         lsb = foo & 0x00F0; 
         negSign = true;
