@@ -73,7 +73,7 @@ public:
   MPL3115A2();
 
   //Public Functions
-  bool begin(); // Gets sensor on the I2C bus.
+  void begin(); // Gets sensor on the I2C bus.
   float readAltitude(); // Returns float with meters above sealevel. Ex: 1638.94
   float readAltitudeFt(); // Returns float with feet above sealevel. Ex: 5376.68
   float readPressure(); // Returns float with barometric pressure in Pa. Ex: 83351.25

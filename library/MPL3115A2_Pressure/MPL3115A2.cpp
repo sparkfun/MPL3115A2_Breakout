@@ -43,7 +43,7 @@ MPL3115A2::MPL3115A2()
 //Begin
 /*******************************************************************************************/
 //Start I2C communication
-bool MPL3115A2::begin(void)
+void MPL3115A2::begin(void)
 {
   Wire.begin();
 }
@@ -128,7 +128,7 @@ float MPL3115A2::readPressure()
 	long pressure_whole = (long)msb<<16 | (long)csb<<8 | (long)lsb;
 	pressure_whole >>= 6; //Pressure is an 18 bit number with 2 bits of decimal. Get rid of decimal portion.
 
-	lsb &= 0b00110000; //Bits 5/4 represent the fractional component
+	lsb &= B00110000; //Bits 5/4 represent the fractional component
 	lsb >>= 4; //Get it right aligned
 	float pressure_decimal = (float)lsb/4.0; //Turn it into fraction
 
@@ -241,7 +241,7 @@ void MPL3115A2::setOversampleRate(byte sampleRate)
   sampleRate <<= 3; //Align it for the CTRL_REG1 register
   
   byte tempSetting = IIC_Read(CTRL_REG1); //Read current settings
-  tempSetting &= 0b11000111; //Clear out old OS bits
+  tempSetting &= B11000111; //Clear out old OS bits
   tempSetting |= sampleRate; //Mask in new OS bits
   IIC_Write(CTRL_REG1, tempSetting);
 }
