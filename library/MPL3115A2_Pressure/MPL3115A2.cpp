@@ -287,3 +287,57 @@ void MPL3115A2::IIC_Write(byte regAddr, byte value)
   Wire.endTransmission(true);
 }
 
+// added by https://github.com/mariocannistra
+// the following offset routines are from Michael Lange on mbed.org
+// modified for some data types and to pre-calculate the offset in °C 
+// when reading the temperature offset
+
+//! Returns the altitude offset stored in the sensor.
+int8_t MPL3115A2::offsetAltitude() { return (int8_t) IIC_Read(OFF_H); }
+//! Sets the altitude offset stored in the sensor. The allowed offset range is from -128 to 127 meters.
+void MPL3115A2::setOffsetAltitude(int8_t offset) { IIC_Write(OFF_H, offset); } 
+//! Returns the pressure offset stored in the sensor.
+float MPL3115A2::offsetPressure() { return (float) IIC_Read(OFF_P); }
+//! Sets the pressure offset stored in the sensor. The allowed offset range is from -128 to 127 where each LSB represents 2 Pa.
+void MPL3115A2::setOffsetPressure(const char offset) { IIC_Write(OFF_P, offset); }
+//! Returns the temperature offset stored in the sensor.
+float MPL3115A2::offsetTemperature() { return (float) IIC_Read(OFF_T) * 0.0625 ; }
+//! Sets the temperature offset stored in the sensor. The allowed offset range is from -128 to 127 where each LSB represents 0.0625ºC.
+void MPL3115A2::setOffsetTemperature(const char offset) { IIC_Write(OFF_T, offset); } 
+
+// the 2 following functions comes from http://www.henrylahr.com/?p=99
+// edited to merge them with the Sparkfun library
+
+// sets the "Barometric input for Altitude calculation" (see datasheet)
+void MPL3115A2::setBarometricInput(float pressSeaLevel)
+{
+	IIC_Write(BAR_IN_MSB, (unsigned int)(pressSeaLevel / 2)>>8);
+	IIC_Write(BAR_IN_LSB, (unsigned int)(pressSeaLevel / 2)&0xFF);
+}
+
+void MPL3115A2::runCalibration(float currentElevation)
+{
+	float pressureAccum = 0.0;
+	
+	setModeBarometer(); // Measure pressure in Pascals
+	setOversampleRate(7); // Set Oversample to the recommended 128 --> 512ms
+	enableEventFlags(); // Enable all three pressure and temp event flags 
+	for (byte i=0;i<6;i++){
+		delay(550); //wait for sensor to read pressure (512ms in datasheet)
+		pressureAccum = pressureAccum + readPressure();
+	}
+	float currpress = pressureAccum / 6; //average pressure over (6/550) seconds
+
+	//Serial.print("Current average pressure: "); 
+	//Serial.print(currpress); 
+	//Serial.println(" Pa");
+
+	//calculate pressure at mean sea level based on the known altitude
+	float powElement = pow(1.0-(currentElevation*0.0000225577), 5.255877);
+	calculated_sea_level_press = currpress / powElement;
+	//Serial.print("Calculated sea level pressure: "); 
+	//Serial.print(calculated_sea_level_press); 
+	//Serial.println(" Pa");
+
+	elevation_offset = 101325.0 - (101325.0 * powElement);
+}
