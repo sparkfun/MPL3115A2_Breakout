@@ -53,11 +53,12 @@ void MPL3115A2::begin(void)
 //Returns -1 if no new data is available
 float MPL3115A2::readAltitude()
 {
-	toggleOneShot(); //Toggle the OST bit causing the sensor to immediately take another reading
+	//Check PDR bit, if it's not set then toggle OST
+  	if((IIC_Read(STATUS) & (1<<2)) == 0) toggleOneShot(); //Toggle the OST bit causing the sensor to immediately take another reading
 
 	//Wait for PDR bit, indicates we have new pressure data
 	int counter = 0;
-	while( (IIC_Read(STATUS) & (1<<1)) == 0)
+	while( (IIC_Read(STATUS) & (1<<2)) == 0)
 	{
 		if(++counter > 600) return(-999); //Error out after max of 512ms for a read
 		delay(1);
@@ -75,6 +76,8 @@ float MPL3115A2::readAltitude()
 	msb = Wire.read();
 	csb = Wire.read();
 	lsb = Wire.read();
+	
+	toggleOneShot(); //Toggle the OST bit causing the sensor to immediately take another reading
 
 	// The least significant bytes l_altitude and l_temp are 4-bit,
 	// fractional values, so you must cast the calulation in (float),
@@ -99,11 +102,11 @@ float MPL3115A2::readAltitudeFt()
 float MPL3115A2::readPressure()
 {
 	//Check PDR bit, if it's not set then toggle OST
-	if(IIC_Read(STATUS) & (1<<2) == 0) toggleOneShot(); //Toggle the OST bit causing the sensor to immediately take another reading
+	if((IIC_Read(STATUS) & (1<<2)) == 0) toggleOneShot(); //Toggle the OST bit causing the sensor to immediately take another reading
 
 	//Wait for PDR bit, indicates we have new pressure data
 	int counter = 0;
-	while(IIC_Read(STATUS) & (1<<2) == 0)
+	while((IIC_Read(STATUS) & (1<<2)) == 0)
 	{
 		if(++counter > 600) return(-999); //Error out after max of 512ms for a read
 		delay(1);
@@ -139,7 +142,8 @@ float MPL3115A2::readPressure()
 
 float MPL3115A2::readTemp()
 {
-	if(IIC_Read(STATUS) & (1<<1) == 0) toggleOneShot(); //Toggle the OST bit causing the sensor to immediately take another reading
+	//Check TDR bit, if it's not set then toggle OST
+	if((IIC_Read(STATUS) & (1<<1)) == 0) toggleOneShot(); //Toggle the OST bit causing the sensor to immediately take another reading
 
 	//Wait for TDR bit, indicates we have new temp data
 	int counter = 0;
@@ -163,17 +167,17 @@ float MPL3115A2::readTemp()
 
 	toggleOneShot(); //Toggle the OST bit causing the sensor to immediately take another reading
 
-    //Negative temperature fix by D.D.G.
+    	//Negative temperature fix by D.D.G.
 	word foo = 0;
-    bool negSign = false;
+    	bool negSign = false;
 
-    //Check for 2s compliment
+    	//Check for 2s compliment
 	if(msb > 0x7F)
 	{
-        foo = ~((msb << 8) + lsb) + 1;  //2’s complement
-        msb = foo >> 8;
-        lsb = foo & 0x00F0; 
-        negSign = true;
+        	foo = ~((msb << 8) + lsb) + 1;  //2’s complement
+        	msb = foo >> 8;
+        	lsb = foo & 0x00F0; 
+        	negSign = true;
 	}
 
 	// The least significant bytes l_altitude and l_temp are 4-bit,
