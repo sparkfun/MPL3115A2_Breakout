@@ -8,12 +8,14 @@ The MPL3115A2 is a MEMS pressure sensor that provides Altitude data to within 30
 
 Repository Contents
 -------------------
-* **/Firmware** - Example Arduino sketch to use with the sensor.  
+* **/Firmware** - Example Arduino sketch to use with the sensor.
+* **/Fritzing** - Fritzing Example wiring images 
 * **/Hardware** - All Eagle design files (.brd, .sch)
+* **/Libraries** - All Arduino libraries
 
 License Information
 -------------------
+The hardware is released under [Creative Commons ShareAlike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/).
+The code is beerware; if you see me (or any other SparkFun employee) at the local, and you've found our code helpful, please buy us a round!
 
-All contents of this repository are released under [Creative Commons Share-alike 3.0](http://creativecommons.org/licenses/by-sa/3.0/).
-
-Author: Aaron Weiss @ SparkFun Electonics
+Distributed as-is; no warranty is given.
