@@ -86,7 +86,22 @@ public:
   void setOversampleRate(byte); // Sets the # of samples from 1 to 128. See datasheet.
   void enableEventFlags(); // Sets the fundamental event flags. Required during setup.
 
+  // added by https://github.com/mariocannistra
+  // to declare the functions by Michael Lange on mbed.org
+  int8_t offsetAltitude();
+  void setOffsetAltitude(int8_t offset);
+  float offsetPressure();
+  void setOffsetPressure(const char offset);
+  float offsetTemperature();
+  void setOffsetTemperature(const char offset);
+  // and the functions by http://www.henrylahr.com/?p=99
+  void setBarometricInput(float pressSeaLevel);
+  void runCalibration(float currentElevation);
+
   //Public Variables
+  float elevation_offset;
+  float calculated_sea_level_press;
+
 
 private:
   //Private Functions
