@@ -1,5 +1,5 @@
-MPL3115A2 Altitude/Pressure Sensor Breakout
-==================
+SparkFun MPL3115A2 Altitude/Pressure Sensor Breakout
+====================================================
 
 [![MPL3115A2 Altitude/Pressure Sensor Breakout](https://dlnmh9ip6v2uc.cloudfront.net/images/products/1/1/0/8/4/11084-01_medium.jpg)  
 *MPL3115A2 Altitude/Pressure Sensor Breakout (SEN-11084)*](https://www.sparkfun.com/products/11084)
@@ -9,9 +9,15 @@ The MPL3115A2 is a MEMS pressure sensor that provides Altitude data to within 30
 Repository Contents
 -------------------
 * **/Firmware** - Example Arduino sketch to use with the sensor.
-* **/Fritzing** - Fritzing Example wiring images 
 * **/Hardware** - All Eagle design files (.brd, .sch)
 * **/Libraries** - All Arduino libraries
+
+Documentation
+--------------
+* **[Library](https://github.com/sparkfun/SparkFun_MPL3115A2_Breakout_Arduino_Library)** - Arduino library for the MPL3115A2.
+* **[Hookup Guide](https://learn.sparkfun.com/tutorials/mpl3115a2-pressure-sensor-hookup-guide)** - Basic hookup guide for the MPL3115A2 Breakout.
+* **[SparkFun Fritzing repo](https://github.com/sparkfun/Fritzing_Parts)** - Fritzing diagrams for SparkFun products.
+* **[SparkFun 3D Model repo](https://github.com/sparkfun/3D_Models)** - 3D models of SparkFun products. 
 
 License Information
 -------------------
