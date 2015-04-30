@@ -1,6 +1,6 @@
 
 /******************************************************************************
-<SparkFun ITG3200 Simple Sketch>
+<SparkFun MPL3115A2 Simple Sketch>
 <Dave @ SparkFun Electronics>
 <November 2014>
 <https://github.com/sparkfun/ITG-3200_Breakout>
@@ -13,7 +13,7 @@ Distributed as-is; no warranty is given.
 
 // PIR example
 #include <Wire.h>
-#include <SparkFunMPL3115A2Breakout.h>
+#include <SparkFunMPL3115A2.h>
 #include <SoftwareSerial.h>
 
 SoftwareSerial display(3, 2);
