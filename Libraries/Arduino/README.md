@@ -9,7 +9,8 @@ The MPL3115A2 is a MEMS pressure sensor that provides Altitude data to within 30
 Repository Contents
 -------------------
 
-* **/examples** - Example sketches for the library (.ino). Run these from the Arduino IDE. 
+* **/examples** - Example sketches for the library (.ino). Run these from the Arduino IDE.
+* **src** - Source files for the library. 
 * **keywords.txt** - Keywords from this library that will be highlighted in the Arduino IDE. 
 * **library.properties** - General library properties for the Arduino package manager. 
 
