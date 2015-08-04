@@ -9,6 +9,8 @@
  
  */
  
+#ifndef _SPARKFUN_MPL3115A2_H_ 
+#define _SPARKFUN_MPL3115A2_H_ 
 
 #if defined(ARDUINO) && ARDUINO >= 100
  #include "Arduino.h"
@@ -98,3 +100,5 @@ private:
   //Private Variables
 
 };
+
+#endif // End include guard
